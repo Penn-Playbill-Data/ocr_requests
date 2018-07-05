@@ -29,6 +29,16 @@ def obtain_length_double(link):
     return int(length)
 
 
+def obtain_length_downsized(link):
+    underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
+    length = ""
+    und_num = underscore[len(underscore) - 2]
+    for i in range(und_num + 1, und_num + 5):
+        if (link[i] != "0" and len(length)) == 0 or len(length) != 0:
+            length += link[i]
+    return int(length)
+
+
 # Take in a link, get the overarching lsidy file name (minus page ID number)
 def obtain_ftitle(link):
     underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
@@ -73,6 +83,20 @@ def assemble_double_links(base, length, ext):
             index = i + 1
             page = "%04d" % (int(index))
             link = "{}{}-{}{}".format(base, page, double_pages, ext)
+            links.append(link)
+            if j == 0:
+                double_pages += 1
+    return links
+
+
+def assemble_downsized_links(base, length, ext):
+    links = []
+    double_pages = 0
+    for i in range(int(length)):
+        for j in range(2):
+            index = i + 1
+            page = "%04d" % (int(index))
+            link = "{}{}_downsized{}".format(base, page, ext)
             links.append(link)
             if j == 0:
                 double_pages += 1
@@ -133,6 +157,9 @@ def run_requests(link):
     if "double" in base:
         length = obtain_length_double(link)
         links = assemble_double_links(base, length, ext)
+    elif "downsized" in link:
+        length = obtain_length_downsized(link)
+        links = assemble_downsized_links(base, length, ext)
     else:
         length = obtain_length(link)
         links = assemble_links(base, length, ext)
