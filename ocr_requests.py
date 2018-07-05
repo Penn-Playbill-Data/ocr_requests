@@ -21,9 +21,9 @@ def obtain_length(link):
 # Take in a link, get the identification number unique to double page files.
 def obtain_length_double(link):
     underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
-    dot = [i for i, ltr in enumerate(link) if ltr == "."]
     length = ""
-    for i in range(underscore[len(underscore) - 1] + 1, dot[len(dot) - 1] - 2):
+    und_num = underscore[len(underscore) - 1]
+    for i in range(und_num + 1, und_num + 5):
         if (link[i] != "0" and len(length)) == 0 or len(length) != 0:
             length += link[i]
     return int(length)
