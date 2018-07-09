@@ -54,6 +54,12 @@ def obtain_base(link):
     return link[:index]
 
 
+def obtain_downsized_base(link):
+    underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
+    index = underscore[len(underscore) - 2] + 1
+    return link[:index]
+
+
 # Takes in a link, returns the extension (.json or .txt)
 def obtain_ext(link):
     dot = [i for i, ltr in enumerate(link) if ltr == "."]
@@ -91,12 +97,22 @@ def assemble_double_links(base, length, ext):
 
 def assemble_downsized_links(base, length, ext):
     links = []
+    for i in range(int(length)):
+            index = i + 1
+            page = "%04d" % (int(index))
+            link = "{}{}_donwsized{}".format(base, page, ext)
+            links.append(link)
+    return links
+
+
+def assemble_double_downsized_links(base, length, ext):
+    links = []
     double_pages = 0
     for i in range(int(length)):
         for j in range(2):
             index = i + 1
             page = "%04d" % (int(index))
-            link = "{}{}_downsized{}".format(base, page, ext)
+            link = "{}{}-{}_donwsized{}".format(base, page, double_pages, ext)
             links.append(link)
             if j == 0:
                 double_pages += 1
@@ -152,15 +168,21 @@ def get_requests(links):
 # in their only folder.
 def run_requests(link):
     ftitle = obtain_ftitle(link)
-    base = obtain_base(link)
     ext = obtain_ext(link)
-    if "double" in base:
+    if "donwsized" in link:
+        base = obtain_downsized_base(link)
+        if "double" in base:
+            length = obtain_length_downsized(link)
+            links = assemble_double_downsized_links(base, length, ext)
+        else:
+            length = obtain_length_downsized(link)
+            links = assemble_downsized_links(base, length, ext)
+    elif "double" in base:
+        base = obtain_base(link)
         length = obtain_length_double(link)
         links = assemble_double_links(base, length, ext)
-    elif "downsized" in link:
-        length = obtain_length_downsized(link)
-        links = assemble_downsized_links(base, length, ext)
     else:
+        base = obtain_base(link)
         length = obtain_length(link)
         links = assemble_links(base, length, ext)
     files = get_requests(links)
@@ -168,7 +190,6 @@ def run_requests(link):
     folder_path = create_folder(files[0], ftitle)
     file_sort(folder_path, files)
     print ("Sort Successful.\n")
-    return ftitle
 
 
 #  Gets the last link in the collection of files, then runs the program.
