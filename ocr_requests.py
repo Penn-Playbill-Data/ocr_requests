@@ -177,7 +177,7 @@ def run_requests(link):
         else:
             length = obtain_length_downsized(link)
             links = assemble_downsized_links(base, length, ext)
-    elif "double" in base:
+    elif "double" in link:
         base = obtain_base(link)
         length = obtain_length_double(link)
         links = assemble_double_links(base, length, ext)
