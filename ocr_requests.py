@@ -29,6 +29,7 @@ def obtain_length_double(link):
     return int(length)
 
 
+# Possibly DELETE
 def obtain_length_downsized(link):
     underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
     length = ""
@@ -57,6 +58,12 @@ def obtain_base(link):
 def obtain_downsized_base(link):
     underscore = [i for i, ltr in enumerate(link) if ltr == "_"]
     index = underscore[len(underscore) - 2] + 1
+    return link[:index]
+
+
+def obtain_full_base(link):
+    dot = [i for i, ltr in enumerate(link) if ltr == "."]
+    index = dot[len(dot) - 1]
     return link[:index]
 
 
@@ -95,28 +102,9 @@ def assemble_double_links(base, length, ext):
     return links
 
 
-def assemble_downsized_links(base, length, ext):
-    links = []
-    for i in range(int(length)):
-            index = i + 1
-            page = "%04d" % (int(index))
-            link = "{}{}_donwsized{}".format(base, page, ext)
-            links.append(link)
-    return links
-
-
-def assemble_double_downsized_links(base, length, ext):
-    links = []
-    double_pages = 0
-    for i in range(int(length)):
-        for j in range(2):
-            index = i + 1
-            page = "%04d" % (int(index))
-            link = "{}{}-{}_donwsized{}".format(base, page, double_pages, ext)
-            links.append(link)
-            if j == 0:
-                double_pages += 1
-    return links
+def assemble_downsized_links(base, ext):
+    link = "{}_donwsized{}".format(base, ext)
+    return link
 
 
 # Takes in a list of links, returns a list of filenames (lsidy to end).
@@ -124,8 +112,8 @@ def assemble_double_downsized_links(base, length, ext):
 def get_link_file_name(links):
     files = []
     for link in links:
-        if not os.path.isfile(link[85:len(link)]):
-            files.append(link[85:len(link)])
+        #if not os.path.isfile(link[85:len(link)]):
+        files.append(link[85:len(link)])
     return files
 
 
@@ -160,7 +148,14 @@ def get_requests(links):
                 if (r.status_code == 200):
                     filename.write(r.text)
                 else:
-                    print("A " + str(r.status_code) + " error has occurred")
+                    base = obtain_full_base(links[i])
+                    ext = obtain_ext(links[i])
+                    link = assemble_downsized_links(base, ext)
+                    r = requests.get(link)
+                    if (r.status_code == 200):
+                        filename.write(r.text)
+                    else:
+                        print("An error has occurred")
         return files
 
 
@@ -173,10 +168,10 @@ def run_requests(link):
         base = obtain_downsized_base(link)
         if "double" in base:
             length = obtain_length_downsized(link)
-            links = assemble_double_downsized_links(base, length, ext)
+            links = assemble_double_links(base, length, ext)
         else:
             length = obtain_length_downsized(link)
-            links = assemble_downsized_links(base, length, ext)
+            links = assemble_links(base, length, ext)
     elif "double" in link:
         base = obtain_base(link)
         length = obtain_length_double(link)
