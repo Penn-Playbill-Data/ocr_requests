@@ -112,7 +112,6 @@ def assemble_downsized_links(base, ext):
 def get_link_file_name(links):
     files = []
     for link in links:
-        #if not os.path.isfile(link[85:len(link)]):
         files.append(link[85:len(link)])
     return files
 
