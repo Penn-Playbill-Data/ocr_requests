@@ -5,6 +5,7 @@
 import sys
 import requests
 import os
+import json
 
 
 # Take in a link, get the identification number - tells how many files to run.
@@ -134,9 +135,25 @@ def file_sort(folder_path, files):
         os.rename(file, sort)
 
 
+def json_trimmer(filename):
+    with open(filename, "r") as file:
+        json_data = json.load(file)
+    dict = {"responses": []}
+    if json_data["responses"][0] == {}:
+        dict["responses"].append({})
+        with open(filename, "w") as file:
+            json.dump(dict, file, indent=4)
+            return
+    add = json_data["responses"][0]["textAnnotations"]
+    inner = {"textAnnotations": add}
+    dict["responses"].append(inner)
+    with open(filename, "w") as file:
+        json.dump(dict, file, indent=4)
+
+
 # Takes in the lists of requests, creates a list of files, and then writes the
 # files from the dashboard into the list of files. The list is then returned.
-def get_requests(links):
+def get_requests(links, ext):
     if (links == 0):
         print("An error has occurred.")
     else:
@@ -145,16 +162,24 @@ def get_requests(links):
             with open(files[i], "w", encoding="utf-8") as filename:
                 r = requests.get(links[i])
                 if (r.status_code == 200):
-                    filename.write(r.text)
+                    if ext == ".json":
+                        filename.write(r.text)
+                    else:
+                        filename.write(r.text)
                 else:
                     base = obtain_full_base(links[i])
                     ext = obtain_ext(links[i])
                     link = assemble_downsized_links(base, ext)
                     r = requests.get(link)
                     if (r.status_code == 200):
-                        filename.write(r.text)
+                        if ext == ".json":
+                            filename.write(r.text)
+                        else:
+                            filename.write(r.text)
                     else:
                         print("An error has occurred")
+            if ext == ".json":
+                json_trimmer(files[i])
         return files
 
 
@@ -179,7 +204,7 @@ def run_requests(link):
         base = obtain_base(link)
         length = obtain_length(link)
         links = assemble_links(base, length, ext)
-    files = get_requests(links)
+    files = get_requests(links, ext)
     print ("Download Successful.\n")
     folder_path = create_folder(files[0], ftitle)
     file_sort(folder_path, files)
