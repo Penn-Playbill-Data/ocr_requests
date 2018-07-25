@@ -4,8 +4,15 @@
 
 import sys
 import requests
+from multiprocessing import Pool
 import os
-import json
+import ujson
+from datetime import datetime as dt
+
+
+def now():
+    now = dt.now()
+    return '%02d-%02d-%02d' % (now.hour, now.minute, now.second)
 
 
 # Take in a link, get the identification number - tells how many files to run.
@@ -137,18 +144,18 @@ def file_sort(folder_path, files):
 
 def json_trimmer(filename):
     with open(filename, "r") as file:
-        json_data = json.load(file)
+        json_data = ujson.load(file)
+    if "error" in json_data:
+        return
     dict = {"responses": []}
     if json_data["responses"][0] == {}:
         dict["responses"].append({})
-        with open(filename, "w") as file:
-            json.dump(dict, file, indent=4)
-            return
-    add = json_data["responses"][0]["textAnnotations"]
-    inner = {"textAnnotations": add}
-    dict["responses"].append(inner)
+    else:
+        add = json_data["responses"][0]["textAnnotations"]
+        inner = {"textAnnotations": add}
+        dict["responses"].append(inner)
     with open(filename, "w") as file:
-        json.dump(dict, file, indent=4)
+        ujson.dump(dict, file, indent=4)
 
 
 # Takes in the lists of requests, creates a list of files, and then writes the
@@ -158,29 +165,29 @@ def get_requests(links, ext):
         print("An error has occurred.")
     else:
         files = get_link_file_name(links)
-        for i in range(len(links)):
-            with open(files[i], "w", encoding="utf-8") as filename:
-                r = requests.get(links[i])
-                if (r.status_code == 200):
-                    if ext == ".json":
-                        filename.write(r.text)
-                    else:
-                        filename.write(r.text)
-                else:
-                    base = obtain_full_base(links[i])
-                    ext = obtain_ext(links[i])
-                    link = assemble_downsized_links(base, ext)
-                    r = requests.get(link)
-                    if (r.status_code == 200):
-                        if ext == ".json":
-                            filename.write(r.text)
-                        else:
-                            filename.write(r.text)
-                    else:
-                        print("An error has occurred")
-            if ext == ".json":
-                json_trimmer(files[i])
+        pool = Pool(processes=10)
+        pool.map(get_one_request, zip(links, files))
         return files
+
+
+def get_one_request(info):
+    link = info[0]
+    file = info[1]
+    ext = obtain_ext(link)
+    with open(file, "w", encoding="utf-8") as filename:
+        r = requests.get(link)
+        if (r.status_code == 200):
+            filename.write(r.text)
+        else:
+            base = obtain_full_base(link)
+            link = assemble_downsized_links(base, ext)
+            r = requests.get(link)
+            if (r.status_code == 200):
+                filename.write(r.text)
+            else:
+                print("An error has occurred")
+    if ext == ".json":
+        json_trimmer(file)
 
 
 # Takes in the original link, then calls the needed functions to save the files
