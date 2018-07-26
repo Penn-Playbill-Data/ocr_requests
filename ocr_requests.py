@@ -159,7 +159,12 @@ def json_trimmer(filename):
             ujson.dump(dict, file, indent=4)
     except (ValueError, ujson.JSONDecodeError) as e:
         with open(filename, "w") as file:
+            folder = os.path.dirname(os.path.realpath(file))
+            ftitle = os.path.splitext(os.path.basename(file))[0]
+            new = "{}-ERROR.txt".format(ftitle)
+            new = "{}/{}".format(folder, new)
             file.write(e)
+            os.rename(file, new)
 
 
 # Takes in the lists of requests, creates a list of files, and then writes the
