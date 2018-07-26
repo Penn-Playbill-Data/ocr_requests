@@ -143,19 +143,23 @@ def file_sort(folder_path, files):
 
 
 def json_trimmer(filename):
-    with open(filename, "r") as file:
-        json_data = ujson.load(file)
-    if "error" in json_data:
-        return
-    dict = {"responses": []}
-    if json_data["responses"][0] == {}:
-        dict["responses"].append({})
-    else:
-        add = json_data["responses"][0]["textAnnotations"]
-        inner = {"textAnnotations": add}
-        dict["responses"].append(inner)
-    with open(filename, "w") as file:
-        ujson.dump(dict, file, indent=4)
+    try:
+        with open(filename, "r") as file:
+            json_data = ujson.load(file)
+        if "error" in json_data:
+            return
+        dict = {"responses": []}
+        if json_data["responses"][0] == {}:
+            dict["responses"].append({})
+        else:
+            add = json_data["responses"][0]["textAnnotations"]
+            inner = {"textAnnotations": add}
+            dict["responses"].append(inner)
+        with open(filename, "w") as file:
+            ujson.dump(dict, file, indent=4)
+    except (ValueError, ujson.JSONDecodeError) as e:
+        with open(filename, "w") as file:
+            file.write(e)
 
 
 # Takes in the lists of requests, creates a list of files, and then writes the
