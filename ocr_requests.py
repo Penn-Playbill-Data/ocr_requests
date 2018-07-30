@@ -3,10 +3,12 @@
 # a folder with the lsidy title.
 
 import sys
+import traceback
 import requests
 from multiprocessing import Pool
 import os
 import ujson
+import json
 from datetime import datetime as dt
 
 
@@ -157,25 +159,33 @@ def json_trimmer(filename):
             dict["responses"].append(inner)
         with open(filename, "w") as file:
             ujson.dump(dict, file, indent=4)
-    except (ValueError, ujson.JSONDecodeError) as e:
-        with open(filename, "w") as file:
-            folder = os.path.dirname(os.path.realpath(file))
-            ftitle = os.path.splitext(os.path.basename(file))[0]
-            new = "{}-ERROR.txt".format(ftitle)
+    except (ValueError, json.JSONDecodeError):
+        with open(filename, "w") as f:
+            folder = os.path.dirname(os.path.realpath(filename))
+            ftitle = os.path.splitext(os.path.basename(filename))[0]
+            new = "{}_ERROR.txt".format(ftitle)
             new = "{}/{}".format(folder, new)
-            file.write(e)
-            os.rename(file, new)
+            # error = sys.exc_info()
+            traceback.print_exc(limit=None, file=f, chain=True)
+        os.rename(filename, new)
+        filename = new
+        return filename
 
 
 # Takes in the lists of requests, creates a list of files, and then writes the
 # files from the dashboard into the list of files. The list is then returned.
-def get_requests(links, ext):
-    if (links == 0):
+def get_requests(links):
+    if (len(links) == 0):
         print("An error has occurred.")
     else:
         files = get_link_file_name(links)
-        pool = Pool(processes=10)
-        pool.map(get_one_request, zip(links, files))
+        f = []
+        if len(links) < 10:
+            pool = Pool(processes=len(links))
+        else:
+            pool = Pool(processes=10)
+        f = (pool.map(get_one_request, zip(links, files)))
+        files = f
         return files
 
 
@@ -195,8 +205,11 @@ def get_one_request(info):
                 filename.write(r.text)
             else:
                 print("An error has occurred")
+                filename.write(r.status_code)
     if ext == ".json":
-        json_trimmer(file)
+        return json_trimmer(file)
+    else:
+        return file
 
 
 # Takes in the original link, then calls the needed functions to save the files
@@ -220,7 +233,7 @@ def run_requests(link):
         base = obtain_base(link)
         length = obtain_length(link)
         links = assemble_links(base, length, ext)
-    files = get_requests(links, ext)
+    files = get_requests(links)
     print ("Download Successful.\n")
     folder_path = create_folder(files[0], ftitle)
     file_sort(folder_path, files)

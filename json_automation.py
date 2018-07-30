@@ -13,12 +13,6 @@ def get_list(file):
     return links
 
 
-def print_error(link, e):
-    file = "{}/{}".format(os.getcwd(), "error.txt")
-    with open(file, "a") as f:
-        f.write("Link: {} \nError: {}".format(link, e))
-
-
 def del_line(file):
     data = ""
     with open(file, "r") as filename:
