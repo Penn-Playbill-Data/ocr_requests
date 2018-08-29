@@ -59,6 +59,7 @@ directly to the computer rather than to Dropbox for slightly faster results.
 
 ## Installation
 Download folder.
+In Terminal, enter `pip3 install ujson`
 
 ## Authors
 Anastasia Hutnick 7.27.2018

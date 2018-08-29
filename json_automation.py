@@ -5,7 +5,6 @@ import os
 
 
 def get_list(file):
-    # file = "{}/{}".format(os.getcwd(), "scratch.txt")
     links = []
     with open(file, "r") as filename:
         for line in enumerate(filename):
